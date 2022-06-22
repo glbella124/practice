@@ -1,0 +1,323 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>airport</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background: rgb(0, 0, 0);
+      }
+    </style>
+    <!-- <link rel="stylesheet" href="./main.css" /> -->
+    <!-- <script src="./init.js"></script> -->
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.16/esri/themes/light/main.css"
+    />
+    <!-- <link rel="stylesheet" href="http://139.196.174.214/arcgis_js_api/library/4.16/esri/css/main.css"/> -->
+    <style>
+      /* .non-transparent {
+        position: absolute;
+        top: 70px;
+        right: 30px;
+        width: 70px;
+        height: 30px;
+        cursor: pointer;
+      }
+      .transparent {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        width: 70px;
+        height: 30px;
+        cursor: pointer;
+      } */
+      .select-box {
+        padding: 10px;
+        width: 150px;
+        height: 100px;
+        position: absolute;
+        left: 30px;
+        bottom: 30px;
+        background: white;
+        border-radius: 4px;
+      }
+
+      .start-btn{
+        width:100px;
+        height: 40px;
+        position: absolute;
+        right:10px;
+        top:30px;
+      }
+      .end-btn{
+        width:100px;
+        height: 40px;
+        position: absolute;
+        right:10px;
+        top:80px;
+      }
+    </style>
+    <script src="https://js.arcgis.com/4.16/"></script>
+    <!-- <script src="http://139.196.174.214/arcgis_js_api/library/4.16/init.js"></script> -->
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/SceneLayer",
+        "esri/layers/WebTileLayer",
+        "esri/widgets/Slice",
+        "esri/widgets/Slice/SliceViewModel",
+        "esri/layers/TileLayer",
+        "esri/layers/ElevationLayer",
+      ], (
+        Map,
+        SceneView,
+        SceneLayer,
+        WebTileLayer,
+        Slice,
+        SliceViewModel,
+        TileLayer,
+        ElevationLayer
+      ) => {
+        let skyKey = "0024544fd0017419d3d685513eccd06d";
+        // 天地图
+        let skyMap = {
+          baseMap:
+            "http://t4.tianditu.com/DataServer?T=vec_w&tk=" +
+            skyKey +
+            "&x={col}&y={row}&l={level}",
+          imgMap:
+            "http://t0.tianditu.com/DataServer?T=img_w&x={col}&y={row}&l={level}&tk=" +
+            skyKey,
+          labelMap:
+            "http://t3.tianditu.com/DataServer?T=cva_w&tk=" +
+            skyKey +
+            "&x={col}&y={row}&l={level}",
+          streetMap:
+            "http://t4.tianditu.com/DataServer?T=vec_w&tk=" +
+            skyKey +
+            "&x={col}&y={row}&l={level}",
+        };
+
+        let tiledLayer = new WebTileLayer({
+          urlTemplate: skyMap.streetMap,
+          // subDomains: ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"],
+        });
+
+        let tiledLayer_poi = new WebTileLayer({
+          urlTemplate: skyMap.labelMap,
+          subDomains: ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"],
+        });
+
+        // Create Map
+        const map = new Map({
+            basemap: "hybrid",
+          // basemap: {
+          //   baseLayers: [tiledLayer, tiledLayer_poi],
+          // },
+          // ground: {
+          //   navigationConstraint: {
+          //     type: "none",
+          //   },
+          //   // surfaceColor: "rgba(0,0,0,0)",
+          // },
+          ground: "world-elevation",
+        });
+        // debugger;
+
+        // Create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            position: [121.804347, 31.147551, 707],
+            tilt: 80,
+            heading: 1,
+          },
+          viewingMode: "global",
+          // alphaCompositingEnabled: true,
+          // environment: {
+          //   atmosphere: {
+          //     quality: "low",
+          //   },
+          //   weather: {
+          //     type: "sun",
+          //   },
+          //   lighting: {
+          //     type: "virtual",
+          //   },
+          //   background: {
+          //     type: "color",
+          //     color: [0, 0, 0, 1],
+          //   },
+          // },
+          environment: {
+            lighting: {
+              directShadowsEnabled: true,
+              date: new Date("Sun Mar 15 2019 6:00:00 GMT+0100 (CET)"),
+            },
+            // atmosphereEnabled: true,
+            starsEnabled: false,
+          },
+        });
+
+        // let elevLyr = new ElevationLayer({
+        //   // Custom elevation service
+        //   url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Elevation/MtBaldy_Elevation/ImageServer",
+        // });
+        // // Add elevation layer to the map's ground.
+        // map.ground.layers.add(elevLyr);
+
+
+        // 切片
+        const slice = new Slice({
+          view: view,
+        });
+        //slice.viewModel.excludeGroundSurface = true;
+        //debugger
+
+        // view.ui.add(slice, {
+        //   position: "top-right",
+        // });
+        slice.watch("viewModel.state",(state)=>{
+          console.log(state,"切片当前的状态");
+        })
+
+        
+
+        // 机场模型组
+        const models = {
+          AIRPORT_BUILDING:
+            "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/airport_building/SceneServer",
+          PD_INTEGRATION:
+            "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/new_integratedLayer/SceneServer",
+          PD_WATERLAYER:
+            "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/new_waterLayer/SceneServer",
+          PD_COMMUNICATION:
+            "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/new_communicationLayer/SceneServer",
+          // PD_COVER:
+          //   "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/my_pipe_lid/SceneServer",
+          // PD_WS:
+          //   "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/new_sewageLayer/SceneServer",
+          // PD_YS:
+          //   "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/new_rainLayer/SceneServer",
+        };
+
+        // Create SceneLayer and add to the map
+        // const sceneLayer = new SceneLayer({
+        //   portalItem: {
+        //     id: "bridge",
+        //   },
+        //   popupEnabled: true,
+        //   url: "https://readearth2014.vicp.cc:14497/geoserver/rest/services/Hosted/airport_building/SceneServer",
+        // });
+        // map.add(sceneLayer);
+
+        for (let key in models) {
+          createSceneLayer(key, models[key]);
+        }
+
+        document.getElementById("start").addEventListener("click",()=>{
+          // alert("123")
+          // slice.start()
+          slice.viewModel.start()
+        })
+
+        document.getElementById("end").addEventListener("click",()=>{
+          slice.viewModel.clear()
+        })
+
+        function createSceneLayer(id, url) {
+          const sceneLayer = new SceneLayer({
+            portalItem: {
+              id: id,
+            },
+            popupEnabled: true,
+            url: url,
+            // popupTemplate: {
+            //   content: "test",
+            // },
+          });
+
+          map.add(sceneLayer);
+
+          slice.viewModel.excludedLayers.push(sceneLayer);
+
+          // debugger;
+
+          // 渲染模型
+          // Create MeshSymbol3D for symbolizing SceneLayer
+          // const symbol = {
+          //   type: "mesh-3d", // autocasts as new MeshSymbol3D()
+          //   symbolLayers: [
+          //     {
+          //       type: "fill", // autocasts as new FillSymbol3DLayer()
+          //       // If the value of material is not assigned, the default color will be grey
+          //       material: {
+          //         // color: [244, 247, 134]
+          //         // color: [230, 230, 230, 0.7],
+          //         color: "#F5D5A9",
+          //         colorMixMode: "tint",
+          //       },
+          //     },
+          //   ],
+          // };
+          // Add the renderer to sceneLayer
+          // sceneLayer.renderer = {
+          //   type: "simple", // autocasts as new SimpleRenderer()
+          //   symbol: symbol,
+          // };
+        }
+
+        function setTransparent(type) {
+          switch (type) {
+            case "trans":
+              map.ground.opacity = 0.1;
+              // view.alphaCompositingEnabled = false
+              // view.environment.lighting.directShadowsEnabled = true
+              view.environment.lighting.date = new Date(
+                "Sun Mar 15 2019 6:00:00 GMT+0100 (CET)"
+              );
+              // map.ground.surfaceColor = [0,0,0,0]
+              view.environment.atmosphereEnabled = false;
+              //debugger;
+              break;
+            case "opaque":
+              map.ground.opacity = 1;
+              view.environment.atmosphereEnabled = false;
+              break;
+          }
+        }
+
+        document.getElementById("panel").addEventListener("change", (event) => {
+          setTransparent(event.target.id);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div class="select-box" id="panel">
+        <input type="radio" id="trans" class="transparent" name="mode" />
+        <label for="trans">透明</label>
+        <input type="radio" id="opaque" name="mode" checked />
+        <label for="opaque">不透明</label>
+      </div>
+        <input type="button" name="mode" value="start" id="start" class="start-btn">
+        <input type="button" name = "mode"  value = "end" id="end" class="end-btn"/>
+    </div>
+  </body>
+</html>

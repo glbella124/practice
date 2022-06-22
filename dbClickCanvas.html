@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .canvas-box{
+      border:1px solid orange;
+      position: relative;
+    }
+    .button-style{
+      position: absolute;
+      left :10px;
+      top:10px;
+      z-index: 10;
+      width:100px;
+      height: 30px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="canvas-box" style="width: 700px; height: 500px;">
+    <input  type="button" id="editEventButton" class="button-style" value="edit" onclick="polygonEdit()"/>
+    <canvas id="cvs" width="700" height="500">不支持canvas</canvas>
+  </div>
+  <script src="./dbClick.js"></script>
+</body>
+
+</html>
